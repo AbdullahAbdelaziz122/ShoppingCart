@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -16,13 +17,20 @@ import java.util.List;
 @Setter
 public class Category {
 
+    public Category(String name) {
+        this.name = name;
+    }
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
 
+
+
     private String name;
 
-    @OneToMany(mappedBy = "category")
-    private List<Product> products;
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    private List<Product> products = new ArrayList<>();
 }

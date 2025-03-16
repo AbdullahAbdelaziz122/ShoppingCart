@@ -1,22 +1,38 @@
 package com.abdullah.shoppingCart.service.product;
 
-import com.abdullah.shoppingCart.exceptions.product.ProductNotFoundException;
+import com.abdullah.shoppingCart.dto.ProductDTO;
+import com.abdullah.shoppingCart.exceptions.ProductNotFoundException;
+import com.abdullah.shoppingCart.model.Category;
 import com.abdullah.shoppingCart.model.Product;
-import lombok.AllArgsConstructor;
+import com.abdullah.shoppingCart.repository.CategoryRepository;
+import com.abdullah.shoppingCart.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class ProductService implements IProductService{
 
 
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private ModelMapper mapper;
 
     @Override
-    public Product addProduct(Product product) {
-        return null;
+    public Product addProduct(ProductDTO productDTO) {
+
+        Category category = categoryRepository.findByName(productDTO.getCategory().getName())
+                .orElseGet(() -> {
+                    Category newCategory = new Category(productDTO.getCategory().getName());
+                    return categoryRepository.save(newCategory);
+                });
+
+        productDTO.setCategory(category);
+
+        return productRepository.save(DtoToProduct(productDTO, category));
     }
 
     @Override
@@ -32,8 +48,11 @@ public class ProductService implements IProductService{
     }
 
     @Override
-    public void updateProductById(Product product, Long id) {
-
+    public Product updateProductById(ProductDTO productDTO, Long id) {
+        return  productRepository.findById(id)
+                .map(existingProduct -> updateProduct(existingProduct, productDTO))
+                .map(productRepository::save)
+                .orElseThrow(()-> new ProductNotFoundException("Product with id "+ id+ " not found"));
     }
 
     @Override
@@ -48,26 +67,55 @@ public class ProductService implements IProductService{
 
     @Override
     public List<Product> getProductByBrand(String brand) {
-        return List.of();
+        return productRepository.findAllByBrand(brand);
     }
 
     @Override
     public List<Product> getProductByCategoryAndBrand(String category, String brand) {
-        return List.of();
+        return productRepository.findAllByCategoryNameAndBrand(category, brand);
     }
 
     @Override
     public List<Product> getProductByName(String name) {
-        return List.of();
+        return productRepository.findAllByName(name);
     }
 
     @Override
     public List<Product> getProductByBrandAndName(String brand, String name) {
-        return List.of();
+        return productRepository.findAllByBrandAndName(brand, name);
     }
 
     @Override
     public Long countProductsByBrandAndName(String brand, String name) {
-        return null;
+        return productRepository.countByBrandAndName(brand, name);
+    }
+
+
+    private Product DtoToProduct (ProductDTO productDTO, Category category){
+        return new Product(
+                productDTO.getName(),
+                productDTO.getBrand(),
+                productDTO.getPrice(),
+                productDTO.getInventory(),
+                productDTO.getDescription(),
+                category
+        );
+    }
+
+
+    private Product updateProduct(Product existingProduct, ProductDTO newProduct){
+        existingProduct.setName(newProduct.getName());
+        existingProduct.setBrand(newProduct.getBrand());
+        existingProduct.setPrice(newProduct.getPrice());
+        existingProduct.setInventory(newProduct.getInventory());
+        existingProduct.setDescription(newProduct.getDescription());
+
+        Category category = categoryRepository.findByName(newProduct.getCategory().getName())
+                .orElseGet(() -> {
+                    Category newcategory = new Category(newProduct.getName());
+                    return categoryRepository.save(newcategory);
+                });
+        existingProduct.setCategory(category);
+        return existingProduct;
     }
 }

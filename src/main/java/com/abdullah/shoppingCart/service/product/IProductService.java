@@ -1,14 +1,17 @@
 package com.abdullah.shoppingCart.service.product;
 
+import com.abdullah.shoppingCart.dto.ProductDTO;
 import com.abdullah.shoppingCart.model.Product;
 
 import java.util.List;
 
 public interface IProductService {
-    Product addProduct(Product product);
+
+    Product addProduct(ProductDTO productDTO);
+
     Product getProductById(Long id);
     void deleteProductById(Long id);
-    void updateProductById(Product product, Long id);
+    Product updateProductById(ProductDTO product, Long id);
 
     List<Product> getAllProduct();
     List<Product> getProductsByCategory(String category);

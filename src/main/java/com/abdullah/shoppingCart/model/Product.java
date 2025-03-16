@@ -7,14 +7,22 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
 public class Product {
+    public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category) {
+        this.name = name;
+        this.brand = brand;
+        this.price = price;
+        this.inventory = inventory;
+        this.description = description;
+        this.category = category;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,5 +43,5 @@ public class Product {
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Image> images;
+    private List<Image> images = new ArrayList<>();
 }
