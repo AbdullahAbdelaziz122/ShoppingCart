@@ -1,7 +1,7 @@
 package com.abdullah.shoppingCart.service.category;
 
 import com.abdullah.shoppingCart.dto.CategoryDTO;
-import com.abdullah.shoppingCart.exceptions.CategoryAlreadyExistsException;
+import com.abdullah.shoppingCart.exceptions.AlreadyExistsException;
 import com.abdullah.shoppingCart.exceptions.ResourcesNotFoundException;
 import com.abdullah.shoppingCart.model.Category;
 import com.abdullah.shoppingCart.repository.CategoryRepository;
@@ -40,7 +40,7 @@ public class CategoryService implements ICategoryService{
     public Category addCategory(@Valid CategoryDTO categoryDTO) {
 
         if (categoryRepository.findByName(categoryDTO.getName()).isPresent()) {
-            throw new CategoryAlreadyExistsException(
+            throw new AlreadyExistsException(
                     String.format("Category with name '%s' already exists", categoryDTO.getName())
             );
         }
@@ -48,8 +48,6 @@ public class CategoryService implements ICategoryService{
         Category category = mapper.map(categoryDTO, Category.class);
         return categoryRepository.save(category);
     }
-
-
 
 
     @Override
@@ -72,7 +70,6 @@ public class CategoryService implements ICategoryService{
                     throw new ResourcesNotFoundException("Category with id " + id + " not found");
                 });
     }
-
 
 
 }

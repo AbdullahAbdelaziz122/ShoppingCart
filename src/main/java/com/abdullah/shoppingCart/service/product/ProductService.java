@@ -1,13 +1,16 @@
 package com.abdullah.shoppingCart.service.product;
 
+import com.abdullah.shoppingCart.dto.CategoryDTO;
 import com.abdullah.shoppingCart.dto.ProductDTO;
 import com.abdullah.shoppingCart.exceptions.ProductNotFoundException;
+import com.abdullah.shoppingCart.exceptions.ResourcesNotFoundException;
 import com.abdullah.shoppingCart.model.Category;
 import com.abdullah.shoppingCart.model.Product;
 import com.abdullah.shoppingCart.repository.CategoryRepository;
 import com.abdullah.shoppingCart.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,7 +47,7 @@ public class ProductService implements IProductService{
     @Override
     public void deleteProductById(Long id) {
         productRepository.findById(id).ifPresentOrElse(productRepository::delete,
-                ()-> {throw new ProductNotFoundException("Product with id "+id+ " not found");});
+                ()-> {throw new ResourcesNotFoundException("Product with id "+id+ " not found");});
     }
 
     @Override
@@ -52,7 +55,7 @@ public class ProductService implements IProductService{
         return  productRepository.findById(id)
                 .map(existingProduct -> updateProduct(existingProduct, productDTO))
                 .map(productRepository::save)
-                .orElseThrow(()-> new ProductNotFoundException("Product with id "+ id+ " not found"));
+                .orElseThrow(()-> new ResourcesNotFoundException("Product with id "+ id+ " not found"));
     }
 
     @Override
@@ -86,6 +89,27 @@ public class ProductService implements IProductService{
     }
 
     @Override
+    public List<Product> filterProducts(String name, String brand, String category) {
+        Specification<Product> spec = Specification.where(null);
+
+        if (category != null && !category.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("category").get("name"), category));
+        }
+        if (brand != null && !brand.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("brand"), brand));
+        }
+        if (name != null && !name.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(root.get("name"), "%"+name+"%"));
+        }
+
+        return productRepository.findAll(spec);
+    }
+
+
+    @Override
     public Long countProductsByBrandAndName(String brand, String name) {
         return productRepository.countByBrandAndName(brand, name);
     }
@@ -103,19 +127,36 @@ public class ProductService implements IProductService{
     }
 
 
-    private Product updateProduct(Product existingProduct, ProductDTO newProduct){
-        existingProduct.setName(newProduct.getName());
-        existingProduct.setBrand(newProduct.getBrand());
-        existingProduct.setPrice(newProduct.getPrice());
-        existingProduct.setInventory(newProduct.getInventory());
-        existingProduct.setDescription(newProduct.getDescription());
 
-        Category category = categoryRepository.findByName(newProduct.getCategory().getName())
-                .orElseGet(() -> {
-                    Category newcategory = new Category(newProduct.getName());
-                    return categoryRepository.save(newcategory);
-                });
-        existingProduct.setCategory(category);
+
+
+    private Product updateProduct(Product existingProduct, ProductDTO newProduct) {
+        if (newProduct.getName() != null) {
+            existingProduct.setName(newProduct.getName());
+        }
+        if (newProduct.getBrand() != null) {
+            existingProduct.setBrand(newProduct.getBrand());
+        }
+        if (newProduct.getPrice() != null) {
+            existingProduct.setPrice(newProduct.getPrice());
+        }
+        if (newProduct.getInventory() != null) {
+            existingProduct.setInventory(newProduct.getInventory());
+        }
+        if (newProduct.getDescription() != null) {
+            existingProduct.setDescription(newProduct.getDescription());
+        }
+
+        if (newProduct.getCategory() != null && newProduct.getCategory().getName() != null) {
+            Category category = categoryRepository.findByName(newProduct.getCategory().getName())
+                    .orElseGet(() -> {
+                        Category newCategory = new Category(newProduct.getCategory().getName());
+                        return categoryRepository.save(newCategory);
+                    });
+            existingProduct.setCategory(category);
+        }
+
         return existingProduct;
     }
+
 }

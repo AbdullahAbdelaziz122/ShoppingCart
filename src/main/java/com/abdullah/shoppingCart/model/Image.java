@@ -11,7 +11,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "image") // Explicit table name to avoid conflicts
 public class Image {
 
     @Id
@@ -34,4 +33,6 @@ public class Image {
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+
 }

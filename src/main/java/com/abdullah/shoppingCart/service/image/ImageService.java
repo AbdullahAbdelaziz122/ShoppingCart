@@ -35,51 +35,7 @@ public class ImageService implements IImageService{
         });
     }
 
-//    @Override
-//    @Transactional
-//    public List<ImageDTO> saveImages(List<MultipartFile> files, Long productId) {
-//        // validate input
-//        if(files.isEmpty() || files == null){
-//            throw new IllegalArgumentException("Image List cannot be empty");
-//        }
-//
-//
-//        // fetch product
-//        Product product = productService.getProductById(productId);
-//
-//        List<ImageDTO> savedImagesDTOs = new ArrayList<>();
-//
-//        for(MultipartFile file : files){
-//            try {
-//                Image image = new Image();
-//                image.setFileName(file.getOriginalFilename());
-//                image.setImageData(file.getBytes());
-//                image.setFileType(file.getContentType());
-//                image.setProduct(product);
-//
-//                String urlBuilder = "api/v1/images/image/download/";
-//                String downloadUrl =urlBuilder+ image.getId();
-//                image.setDownloadUrl(downloadUrl);
-//                Image savedImage = imageRepository.save(image);
-//
-//                savedImage.setDownloadUrl(urlBuilder + savedImage.getId());
-//                imageRepository.save(savedImage);
-//
-//                ImageDTO imageDTO = new ImageDTO();
-//                imageDTO.setImageId(savedImage.getId());
-//                imageDTO.setImageName(savedImage.getFileName());
-//                imageDTO.setDownloadUrl(savedImage.getDownloadUrl());
-//                savedImagesDTOs.add(imageDTO);
-//
-//
-//            }catch (IOException e){
-//                throw new RuntimeException(e);
-//            }
-//        }
-//
-//    return null;
-//
-//    }
+
 
     @Transactional
     public List<ImageDTO> saveImages(List<MultipartFile> files, Long productId) {
@@ -133,7 +89,7 @@ public class ImageService implements IImageService{
     public void updateImage(MultipartFile file, Long imageId) {
 
         // validate file
-        if (file.isEmpty() || file == null){
+        if (file == null || file.isEmpty()){
             throw new IllegalArgumentException("Image file cannot be null or empty");
         }
 
