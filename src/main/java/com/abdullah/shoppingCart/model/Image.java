@@ -1,5 +1,6 @@
 package com.abdullah.shoppingCart.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,21 +18,18 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "file_name") // Explicit column name
+    @Column(name = "file_name")
     private String fileName;
 
-    @Column(name = "file_type") // Explicit column name
+    @Column(name = "file_type")
     private String fileType;
-
-    @Lob
-    @Column(name = "image_data") // Rename 'blob' to avoid keyword conflict
-    private byte[] imageData; // Use byte[] instead of Blob
 
     @Column(name = "download_url")
     private String downloadUrl;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnore
     private Product product;
 
 

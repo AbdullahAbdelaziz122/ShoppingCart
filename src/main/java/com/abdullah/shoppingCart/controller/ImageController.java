@@ -7,6 +7,7 @@ import com.abdullah.shoppingCart.model.Image;
 import com.abdullah.shoppingCart.response.ApiResponse;
 import com.abdullah.shoppingCart.service.image.IImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 
@@ -26,6 +29,8 @@ public class ImageController {
 
     private final IImageService imageService;
 
+    @Value("${app.upload-dir}")
+    private String uploadDir;;
 
     @PostMapping("/upload")
     public ResponseEntity<ApiResponse> saveImages(
@@ -40,17 +45,25 @@ public class ImageController {
         }
     }
 
+
+
     @GetMapping("/download/{imageId}")
-    public ResponseEntity<byte[]> downloadImage(@PathVariable Long imageId){
-        Image image = imageService.getImageById(imageId);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + image.getFileName()+ "\"")
-                .contentType(MediaType.parseMediaType(image.getFileType()))
-                .body(image.getImageData());
+    public ResponseEntity<?> downloadImage(@PathVariable Long imageId) {
+        try {
+            Image image = imageService.getImageById(imageId);
+            byte[] imageBytes = Files.readAllBytes(Paths.get(image.getDownloadUrl().replace("/images/", uploadDir + "/")));
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + image.getFileName() + "\"")
+                    .contentType(MediaType.parseMediaType(image.getFileType()))
+                    .body(imageBytes);
+        } catch (ResourcesNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("Image not found: " + e.getMessage(), null));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Failed to read image: " + e.getMessage(), null));
+        }
     }
-
 
     // todo : Try this method later to check logic
     @PutMapping(value = "/image/{imageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -87,7 +100,7 @@ public class ImageController {
 
 
     @DeleteMapping(value = "/image/{imageId}")
-    public ResponseEntity<ApiResponse> updateImage(
+    public ResponseEntity<ApiResponse> deleteImage(
             @PathVariable Long imageId) {
 
         try {
@@ -104,4 +117,5 @@ public class ImageController {
                     .body(new ApiResponse("Failed to update image", null));
         }
     }
+
 }

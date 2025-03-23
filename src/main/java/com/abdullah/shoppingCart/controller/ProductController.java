@@ -67,6 +67,24 @@ public class ProductController {
         }
     }
 
+    @GetMapping("/product/{slug}")
+    public ResponseEntity<ApiResponse> getProductById(@PathVariable String slug){
+        try {
+            Product product = productService.getProductBySlug(slug);
+            return ResponseEntity.ok(new ApiResponse("Products Found",product));
+
+        }catch (ResourcesNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(String.format("Product With ID %s Not found", slug), null)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ApiResponse("Something went Wrong", null)
+            );
+        }
+    }
+
+
     @GetMapping("/search")
     public ResponseEntity<ApiResponse> filterProducts(
             @RequestParam (required = false) String name,
