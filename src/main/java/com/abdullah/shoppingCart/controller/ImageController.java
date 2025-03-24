@@ -28,7 +28,8 @@ import java.util.List;
 public class ImageController {
 
     private final IImageService imageService;
-
+    @Value("${api.prefix}")
+    private String apiPrefix;
     @Value("${app.upload-dir}")
     private String uploadDir;;
 
@@ -47,11 +48,11 @@ public class ImageController {
 
 
 
-    @GetMapping("/download/{imageId}")
+    @GetMapping("download/{imageId}")
     public ResponseEntity<?> downloadImage(@PathVariable Long imageId) {
         try {
             Image image = imageService.getImageById(imageId);
-            byte[] imageBytes = Files.readAllBytes(Paths.get(image.getDownloadUrl().replace("/images/", uploadDir + "/")));
+            byte[] imageBytes = Files.readAllBytes(Paths.get(image.getDownloadUrl().replace(apiPrefix+"/images/", uploadDir + "/")));
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + image.getFileName() + "\"")
                     .contentType(MediaType.parseMediaType(image.getFileType()))
@@ -65,6 +66,28 @@ public class ImageController {
         }
     }
 
+
+    @GetMapping("/{url}")
+    public ResponseEntity<?> getImageByUrl(@PathVariable String url) {
+        try {
+            String downloadUrl = apiPrefix+"/images/"+url;
+            Image image = imageService.getImageByUrl(downloadUrl);
+            byte[] imageBytes = Files.readAllBytes(Paths.get(image.getDownloadUrl().replace(apiPrefix+"/images/", uploadDir + "/")));
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + image.getFileName() + "\"")
+                    .contentType(MediaType.parseMediaType(image.getFileType()))
+                    .body(imageBytes);
+        } catch (ResourcesNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("Image not found: " + e.getMessage(), null));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Failed to read image: " + e.getMessage(), null));
+        }
+    }
+
+
+
     // todo : Try this method later to check logic
     @PutMapping(value = "/image/{imageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> updateImage(
@@ -76,6 +99,7 @@ public class ImageController {
             ResponseEntity<ApiResponse> body = validateImage(file);
             if (body != null) return body;
             // Update the image
+            imageService.deleteImageLocally(imageService.getImageById(imageId));
             imageService.updateImage(file, imageId);
             return ResponseEntity.ok(new ApiResponse("Image updated successfully",null));
 
@@ -110,12 +134,17 @@ public class ImageController {
 
         } catch (ResourcesNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse(e.getMessage(), null));
+                    .body(new ApiResponse(String.format("Image with ID %d is not found", imageId), null));
 
-        } catch (Exception e) {
+        } catch (IOException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(String.format("Image with ID %d can't be accessed or found", imageId), null));
+        }catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse("Failed to update image", null));
         }
     }
+
+
 
 }

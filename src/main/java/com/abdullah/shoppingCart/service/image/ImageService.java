@@ -7,16 +7,13 @@ import com.abdullah.shoppingCart.model.Product;
 import com.abdullah.shoppingCart.repository.ImageRepository;
 import com.abdullah.shoppingCart.service.product.IProductService;
 import com.abdullah.shoppingCart.service.storage.StorageService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -35,14 +32,21 @@ public class ImageService implements IImageService{
 
 
     // todo : delete the image from the fileSystem also !!!!
+
+
     @Override
-    public void deleteImageById(Long id) {
-        imageRepository.findById(id).ifPresentOrElse(imageRepository::delete, ()->{
-            throw new ResourcesNotFoundException("No image found with id: " +id);
-        });
+    public void deleteImageById(Long id) throws IOException {
+        Image image = imageRepository.findById(id)
+                .orElseThrow(()-> new ResourcesNotFoundException("No image found with id:" + id));
+        storageService.deleteImage(image.getDownloadUrl());
+        imageRepository.delete(image);
+
     }
 
-
+    @Override
+    public void deleteImageLocally(Image image) throws IOException{
+        storageService.deleteImage(image.getDownloadUrl());
+    }
 
     @Override
     public List<ImageDTO> saveImages(List<MultipartFile> files, Long productId){
@@ -85,5 +89,12 @@ public class ImageService implements IImageService{
         {
             throw new RuntimeException("Image Update Failed" + e.getMessage());
         }
+    }
+
+    @Override
+    public Image getImageByUrl(String url){
+        return imageRepository.getImageByDownloadUrl(url).orElseThrow( () ->
+                new ResourcesNotFoundException(String.format("Image with URL %s not Found", url))
+        );
     }
 }

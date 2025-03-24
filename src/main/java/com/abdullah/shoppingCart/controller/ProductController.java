@@ -67,7 +67,7 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/product/{slug}")
+    @GetMapping("/{slug}")
     public ResponseEntity<ApiResponse> getProductById(@PathVariable String slug){
         try {
             Product product = productService.getProductBySlug(slug);

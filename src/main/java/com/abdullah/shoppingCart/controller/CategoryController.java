@@ -30,7 +30,7 @@ public class CategoryController {
                         .body(new ApiResponse("Category name Cannot be empty", null));
             }
             Category category = iCategoryService.addCategory(categoryDto);
-            return ResponseEntity.ok().body(new ApiResponse("Category add Success", null));
+            return ResponseEntity.ok().body(new ApiResponse("Category add Success", category));
 
         }catch (AlreadyExistsException e ){
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -55,10 +55,17 @@ public class CategoryController {
         }
     }
 
-    @GetMapping(params = "name")
-    public ResponseEntity<ApiResponse> getCategoryByName(@RequestParam String name){
+    @GetMapping()
+    public ResponseEntity<ApiResponse> getCategoryByName(@RequestParam (required = false) String name){
 
         try {
+            if (name == null || name.isBlank()){
+                List<Category> categories = iCategoryService.getAllCategories();
+                if (categories != null && !categories.isEmpty()) {
+                    return ResponseEntity.ok(new ApiResponse("Categories Found", categories));
+                }
+                return ResponseEntity.ok(new ApiResponse("No Categories Found",null));
+            }
             Category category = iCategoryService.getCategoryByName(name);
             return ResponseEntity.ok(new ApiResponse("Category Found", category));
         }catch (ResourcesNotFoundException e){
@@ -71,17 +78,6 @@ public class CategoryController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse> getCategories(@RequestParam String name){
-
-        try {
-            List<Category> category = iCategoryService.getAllCategories();
-            return ResponseEntity.ok(new ApiResponse("Categories Found", category));
-        }catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse("An unexpected error occurred", null));
-        }
-    }
 
     @PutMapping("/category/{id}")
     public ResponseEntity<ApiResponse> updateCategory(
