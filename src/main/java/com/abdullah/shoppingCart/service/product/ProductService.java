@@ -2,13 +2,14 @@ package com.abdullah.shoppingCart.service.product;
 
 import com.abdullah.shoppingCart.dto.ProductDTO;
 import com.abdullah.shoppingCart.exceptions.ResourcesNotFoundException;
+import com.abdullah.shoppingCart.mapper.CategoryMapper;
+import com.abdullah.shoppingCart.mapper.ProductMapper;
 import com.abdullah.shoppingCart.model.Category;
 import com.abdullah.shoppingCart.model.Product;
 import com.abdullah.shoppingCart.repository.CategoryRepository;
 import com.abdullah.shoppingCart.repository.ProductRepository;
 import com.abdullah.shoppingCart.util.SlugUtils;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -21,32 +22,40 @@ public class ProductService implements IProductService{
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private ModelMapper mapper;
+    private final ProductMapper productMapper;
+    private final CategoryMapper categoryMapper;
     private final SlugUtils utils = new SlugUtils();
+    private SlugUtils slugUtils = new SlugUtils();
 
     @Override
-    public Product addProduct(ProductDTO productDTO) {
-
+    public ProductDTO addProduct(ProductDTO productDTO) {
+        //check category
         Category category = categoryRepository.findByName(productDTO.getCategory().getName())
                 .orElseGet(() -> {
                     Category newCategory = new Category(productDTO.getCategory().getName());
                     return categoryRepository.save(newCategory);
                 });
+        productDTO.setSlug(generateUniqueSlug(slugUtils.generateSlug(productDTO.getName())));
+        Product product = productMapper.toEntity(productDTO);
+        product.setCategory(category);
+        productRepository.save(product);
 
-        productDTO.setCategory(category);
-
-        return productRepository.save(dtoToProduct(productDTO, category));
+        return productMapper.toDto(product);
     }
 
     @Override
-    public Product getProductById(Long id) {
-        return productRepository.findById(id)
+    public ProductDTO getProductById(Long id) {
+        return productRepository.findById(id).map(product -> {
+            return productMapper.toDto(product);
+                })
                 .orElseThrow(()-> new ResourcesNotFoundException("Product with id" + id + " is not found ."));
     }
 
     @Override
-    public Product getProductBySlug(String slug) {
-        return productRepository.findBySlug(slug)
+    public ProductDTO getProductBySlug(String slug) {
+        return productRepository.findBySlug(slug).map(product -> {
+            return productMapper.toDto(product);
+                })
                 .orElseThrow(()-> new ResourcesNotFoundException("Product with Slug" + slug + " is not found ."));
     }
 
@@ -59,21 +68,40 @@ public class ProductService implements IProductService{
 
 
     @Override
-    public Product updateProductById(ProductDTO productDTO, Long id) {
-        return  productRepository.findById(id)
-                .map(existingProduct -> updateProduct(existingProduct, productDTO))
-                .map(productRepository::save)
-                .orElseThrow(()-> new ResourcesNotFoundException("Product with id "+ id+ " not found"));
+    public ProductDTO updateProductById(ProductDTO productDTO, Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourcesNotFoundException(String.format("Product with ID %d not found", id)));
+
+        productMapper.updateProduct(product, productDTO);
+
+        // Custom logic for slug
+        if (productDTO.getName() != null) {
+            product.setSlug(generateUniqueSlug(slugUtils.generateSlug(productDTO.getName())));
+        }
+
+        // Custom logic for category
+        if (productDTO.getCategory() != null && productDTO.getCategory().getName() != null) {
+            Category category = categoryRepository.findByName(productDTO.getCategory().getName())
+                    .orElseGet(() -> {
+                        Category newCategory = new Category(productDTO.getCategory().getName());
+                        return categoryRepository.save(newCategory);
+                    });
+            product.setCategory(category);
+        }
+
+        return productMapper.toDto(productRepository.save(product));
     }
 
+
+
     @Override
-    public List<Product> getAllProduct() {
-        return productRepository.findAll();
+    public List<ProductDTO> getAllProduct() {
+        return productMapper.toDtoList(productRepository.findAll());
     }
 
 
     @Override
-    public List<Product> filterProducts(String name, String brand, String category) {
+    public List<ProductDTO> filterProducts(String name, String brand, String category) {
         Specification<Product> spec = Specification.where(null);
 
         if (category != null && !category.isBlank()) {
@@ -89,7 +117,7 @@ public class ProductService implements IProductService{
                     cb.like(root.get("name"), "%"+name+"%"));
         }
 
-        return productRepository.findAll(spec);
+        return productMapper.toDtoList(productRepository.findAll(spec));
     }
 
 
@@ -100,52 +128,6 @@ public class ProductService implements IProductService{
 
 
 
-    private Product dtoToProduct(ProductDTO productDTO, Category category) {
-
-        String slug = utils.generateSlug(productDTO.getName());
-        String uniqueSlug = generateUniqueSlug(slug);
-
-        return Product.builder()
-                .name(productDTO.getName())
-                .brand(productDTO.getBrand())
-                .price(productDTO.getPrice())
-                .inventory(productDTO.getInventory())
-                .description(productDTO.getDescription())
-                .category(category)
-                .slug(uniqueSlug)
-                .build();
-    }
-
-
-    private Product updateProduct(Product existingProduct, ProductDTO newProduct) {
-        if (newProduct.getName() != null) {
-            existingProduct.setName(newProduct.getName());
-            existingProduct.setSlug(generateUniqueSlug(utils.generateSlug(newProduct.getName())));
-        }
-        if (newProduct.getBrand() != null) {
-            existingProduct.setBrand(newProduct.getBrand());
-        }
-        if (newProduct.getPrice() != null) {
-            existingProduct.setPrice(newProduct.getPrice());
-        }
-        if (newProduct.getInventory() != null) {
-            existingProduct.setInventory(newProduct.getInventory());
-        }
-        if (newProduct.getDescription() != null) {
-            existingProduct.setDescription(newProduct.getDescription());
-        }
-
-        if (newProduct.getCategory() != null && newProduct.getCategory().getName() != null) {
-            Category category = categoryRepository.findByName(newProduct.getCategory().getName())
-                    .orElseGet(() -> {
-                        Category newCategory = new Category(newProduct.getCategory().getName());
-                        return categoryRepository.save(newCategory);
-                    });
-            existingProduct.setCategory(category);
-        }
-
-        return existingProduct;
-    }
 
     private String generateUniqueSlug(String baseSlug) {
         String candidateSlug = baseSlug;

@@ -6,15 +6,15 @@ import com.abdullah.shoppingCart.model.Category;
 import java.util.List;
 
 public interface ICategoryService {
-    Category getCategoryById(Long id);
+    CategoryDTO getCategoryById(Long id);
 
-    Category getCategoryByName(String name);
+    CategoryDTO getCategoryByName(String name);
 
-    List<Category> getAllCategories();
+    List<CategoryDTO> getAllCategories();
 
-    Category addCategory(CategoryDTO categoryDTO);
+    CategoryDTO addCategory(CategoryDTO categoryDTO);
 
-    Category updateCategory(CategoryDTO categoryDTO, Long id);
+    CategoryDTO updateCategory(CategoryDTO categoryDTO, Long id);
 
     void deleteCategory(Long id);
 

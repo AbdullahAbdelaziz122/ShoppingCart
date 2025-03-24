@@ -29,8 +29,8 @@ public class CategoryController {
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse("Category name Cannot be empty", null));
             }
-            Category category = iCategoryService.addCategory(categoryDto);
-            return ResponseEntity.ok().body(new ApiResponse("Category add Success", category));
+            CategoryDTO response = iCategoryService.addCategory(categoryDto);
+            return ResponseEntity.ok().body(new ApiResponse("Category add Success", response));
 
         }catch (AlreadyExistsException e ){
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -43,8 +43,8 @@ public class CategoryController {
     public ResponseEntity<ApiResponse> getCategoryById(@PathVariable Long id){
 
         try {
-            Category category = iCategoryService.getCategoryById(id);
-            return ResponseEntity.ok(new ApiResponse("Category Found", category));
+            CategoryDTO response = iCategoryService.getCategoryById(id);
+            return ResponseEntity.ok(new ApiResponse("Category Found", response));
         }catch (ResourcesNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new ApiResponse(String.format("Category with ID %d not found", id), null)
@@ -59,14 +59,18 @@ public class CategoryController {
     public ResponseEntity<ApiResponse> getCategoryByName(@RequestParam (required = false) String name){
 
         try {
+
+            // check if No Parameter is given
             if (name == null || name.isBlank()){
-                List<Category> categories = iCategoryService.getAllCategories();
-                if (categories != null && !categories.isEmpty()) {
-                    return ResponseEntity.ok(new ApiResponse("Categories Found", categories));
+                List<CategoryDTO> response = iCategoryService.getAllCategories();
+                if (response != null && !response.isEmpty()) {
+                    return ResponseEntity.ok(new ApiResponse("Categories Found", response));
                 }
                 return ResponseEntity.ok(new ApiResponse("No Categories Found",null));
             }
-            Category category = iCategoryService.getCategoryByName(name);
+
+            // return specific category
+            CategoryDTO category = iCategoryService.getCategoryByName(name);
             return ResponseEntity.ok(new ApiResponse("Category Found", category));
         }catch (ResourcesNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
@@ -85,7 +89,7 @@ public class CategoryController {
             @Valid @RequestBody CategoryDTO categoryDTO                                          ){
 
         try {
-            Category category = iCategoryService.updateCategory(categoryDTO, id);
+            CategoryDTO category = iCategoryService.updateCategory(categoryDTO, id);
             return ResponseEntity.ok(new ApiResponse("Category update success", category));
         } catch (ResourcesNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(

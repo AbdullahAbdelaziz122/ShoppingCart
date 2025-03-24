@@ -28,8 +28,8 @@ public class ProductController {
     public ResponseEntity<ApiResponse> addProduct(@Valid @RequestBody ProductDTO productDTO){
 
         try {
-            Product product = productService.addProduct(productDTO);
-            return ResponseEntity.ok(new ApiResponse("Product Add success", product));
+            ProductDTO response = productService.addProduct(productDTO);
+            return ResponseEntity.ok(new ApiResponse("Product Add success", response));
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse("Something went wrong", null));
@@ -40,7 +40,7 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllProduct(){
         try {
-            List<Product> products = productService.getAllProduct();
+            List<ProductDTO> products = productService.getAllProduct();
             String message = products.isEmpty() ? "No Products Found": "Products Found";
             return ResponseEntity.ok(new ApiResponse(message,products));
         } catch (Exception e) {
@@ -53,7 +53,7 @@ public class ProductController {
     @GetMapping("/product/{id}")
     public ResponseEntity<ApiResponse> getProductById(@PathVariable Long id){
         try {
-            Product product = productService.getProductById(id);
+            ProductDTO product = productService.getProductById(id);
             return ResponseEntity.ok(new ApiResponse("Products Found",product));
 
         }catch (ResourcesNotFoundException e){
@@ -70,7 +70,7 @@ public class ProductController {
     @GetMapping("/{slug}")
     public ResponseEntity<ApiResponse> getProductById(@PathVariable String slug){
         try {
-            Product product = productService.getProductBySlug(slug);
+            ProductDTO product = productService.getProductBySlug(slug);
             return ResponseEntity.ok(new ApiResponse("Products Found",product));
 
         }catch (ResourcesNotFoundException e){
@@ -92,7 +92,7 @@ public class ProductController {
             @RequestParam (required = false) String category
     ){
         try {
-            List<Product> products = productService.filterProducts(name, brand, category);
+            List<ProductDTO> products = productService.filterProducts(name, brand, category);
             String message = products.isEmpty() ? "No Product Found" : "Products Found";
             return ResponseEntity.ok(new ApiResponse(message, products));
         } catch (Exception e) {
@@ -109,8 +109,8 @@ public class ProductController {
     ){
 
         try {
-            Product product = productService.updateProductById(productDTO, productId);
-            return ResponseEntity.ok(new ApiResponse("Product Update Success", product));
+            ProductDTO response = productService.updateProductById(productDTO, productId);
+            return ResponseEntity.ok(new ApiResponse("Product Update Success", response));
 
         } catch (ResourcesNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(

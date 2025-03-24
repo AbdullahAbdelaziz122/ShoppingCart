@@ -17,8 +17,6 @@ public class LocalStorageService implements StorageService {
     @Value("${app.upload-dir}")
     private String uploadDir;
 
-    @Value("${api.prefix}")
-    private String apiPrefix;
 
     @Override
     public String uploadImage(MultipartFile file, Long productId) throws IOException {
@@ -39,7 +37,7 @@ public class LocalStorageService implements StorageService {
         Files.createDirectories(filePath.getParent()); // Ensure directory exists
         Files.write(filePath, file.getBytes());
 
-        return apiPrefix + "/images/" + fileName; // Relative URL for serving
+        return "/images/"+ fileName; // Relative URL for serving
     }
 
     private boolean isValidFileType(String fileExtension) {

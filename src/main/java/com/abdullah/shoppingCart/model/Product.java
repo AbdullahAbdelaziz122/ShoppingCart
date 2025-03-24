@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @Builder
 public class Product {
-    public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category) {
+    public Product(String name, String brand, BigDecimal price, Long inventory, String description, Category category) {
         this.name = name;
         this.brand = brand;
         this.price = price;
@@ -38,7 +38,7 @@ public class Product {
 
     private BigDecimal price;
 
-    private int inventory;
+    private Long inventory;
 
     private String description;
 

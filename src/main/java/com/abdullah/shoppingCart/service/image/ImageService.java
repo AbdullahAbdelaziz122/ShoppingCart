@@ -2,13 +2,14 @@ package com.abdullah.shoppingCart.service.image;
 
 import com.abdullah.shoppingCart.dto.ImageDTO;
 import com.abdullah.shoppingCart.exceptions.ResourcesNotFoundException;
+import com.abdullah.shoppingCart.mapper.ImageMapper;
 import com.abdullah.shoppingCart.model.Image;
 import com.abdullah.shoppingCart.model.Product;
 import com.abdullah.shoppingCart.repository.ImageRepository;
+import com.abdullah.shoppingCart.repository.ProductRepository;
 import com.abdullah.shoppingCart.service.product.IProductService;
 import com.abdullah.shoppingCart.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,8 +22,9 @@ public class ImageService implements IImageService{
 
     private final ImageRepository imageRepository;
     private final IProductService productService;
-    private final ModelMapper mapper;
+    private final ImageMapper imageMapper;
     private final StorageService storageService;
+    private final ProductRepository productRepository;
 
     @Override
     public Image getImageById(Long id) {
@@ -31,7 +33,7 @@ public class ImageService implements IImageService{
     }
 
 
-    // todo : delete the image from the fileSystem also !!!!
+
 
 
     @Override
@@ -50,8 +52,11 @@ public class ImageService implements IImageService{
 
     @Override
     public List<ImageDTO> saveImages(List<MultipartFile> files, Long productId){
+
         // check product
-        Product product = productService.getProductById(productId);
+        Product product = productRepository.findById(productId).orElseThrow(
+                () -> new ResourcesNotFoundException(String.format("product with ID %d not found", productId))
+        );
 
         List<Image> images = files.stream().map(file -> {
 
@@ -70,13 +75,14 @@ public class ImageService implements IImageService{
         }).toList();
 
         return images.stream()
-                .map(image -> mapper.map(image, ImageDTO.class)).toList();
+                .map(imageMapper::toDto).toList();
     }
 
 
     @Override
     public void updateImage(MultipartFile file, Long imageId){
-        Image image = getImageById(imageId);
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourcesNotFoundException(String.format("Image with ID %d not found", imageId)));
 
         try {
             String downloadUrl = storageService.uploadImage(file, image.getProduct().getId());

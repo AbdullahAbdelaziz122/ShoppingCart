@@ -7,18 +7,18 @@ import java.util.List;
 
 public interface IProductService {
 
-    Product addProduct(ProductDTO productDTO);
+    ProductDTO addProduct(ProductDTO productDTO);
 
-    Product getProductById(Long id);
+    ProductDTO getProductById(Long id);
 
-    Product getProductBySlug(String slug);
+    ProductDTO getProductBySlug(String slug);
 
     void deleteProductById(Long id);
-    Product updateProductById(ProductDTO product, Long id);
+    ProductDTO updateProductById(ProductDTO product, Long id);
 
-    List<Product> getAllProduct();
+    List<ProductDTO> getAllProduct();
 
-    List<Product> filterProducts(String name, String brand, String category);
+    List<ProductDTO> filterProducts(String name, String brand, String category);
     Long countProductsByBrandAndName(String brand, String name);
 
 
