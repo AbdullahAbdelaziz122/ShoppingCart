@@ -1,3 +1,3 @@
 # ShoppingCart
 
-------------- Web Application still Under development -------------
+------------- Under development -------------
